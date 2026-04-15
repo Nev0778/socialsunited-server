@@ -16,19 +16,31 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  // Find a user whose Facebook webhook verify token matches
-  const db = getDb();
-  const result = await db.query(
-    "SELECT user_id FROM user_credentials WHERE channel = 'facebook' AND key = 'webhookVerifyToken' AND value = $1 LIMIT 1",
-    [token]
-  );
-
-  if (result.rowCount === 0) {
-    res.status(403).send('Forbidden');
+  // First check: global env var verify token (used during initial setup)
+  const globalVerifyToken = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN;
+  if (globalVerifyToken && token === globalVerifyToken) {
+    res.status(200).send(challenge);
     return;
   }
 
-  res.status(200).send(challenge);
+  // Second check: per-user verify token stored in DB
+  try {
+    const db = getDb();
+    const result = await db.query(
+      "SELECT user_id FROM user_credentials WHERE channel = 'facebook' AND key = 'webhookVerifyToken' AND value = $1 LIMIT 1",
+      [token]
+    );
+
+    if (result.rowCount === 0) {
+      res.status(403).send('Forbidden');
+      return;
+    }
+
+    res.status(200).send(challenge);
+  } catch (err) {
+    console.error('Facebook webhook verification error:', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 // POST /webhooks/facebook — incoming messages and page comments

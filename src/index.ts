@@ -11,6 +11,7 @@ import credentialsRouter from './routes/credentials';
 import conversationsRouter from './routes/conversations';
 import userRouter from './routes/user';
 import facebookWebhook from './routes/webhooks/facebook';
+import facebookOAuth from './routes/oauth/facebook';
 import whatsappWebhook from './routes/webhooks/whatsapp';
 import twilioWebhook from './routes/webhooks/twilio';
 
@@ -67,6 +68,9 @@ app.use('/auth', authLimiter, authRouter);
 app.use('/credentials', credentialsRouter);
 app.use('/conversations', conversationsRouter);
 app.use('/user', userRouter);
+
+// ── OAuth Routes ─────────────────────────────────────────────────────────────
+app.use('/oauth/facebook', facebookOAuth);
 
 // ── Webhook Routes ────────────────────────────────────────────────────────────
 app.use('/webhooks/facebook', facebookWebhook);
